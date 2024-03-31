@@ -1,0 +1,258 @@
+import tkinter as tk
+import customtkinter as ctk
+
+class MenuCreator(ctk.CTkFrame):
+    #Costumizable
+    def __init__(self, parent, options:tuple, back_color = '#1F1F1F', text_color = '#8C8C8C', font_type = ('Arial', 18), options_font_type = ('Arial', 15),
+                 hover_color= '#313232',hover_state = True, separator_color = '#8C8C8C', separators = True, 
+                 *args, **kwargs):
+        super().__init__(parent, *args, **kwargs)
+        #Unite each parameter
+        self.selected_options = [str(dl) for dl in options]
+        self.backg_color = back_color
+        self.text_color = text_color
+        self.font_ty = font_type
+        self.options_font_ty = options_font_type
+        self.hov_color = hover_color
+        self.is_hover = hover_state
+        self.sep_color = separator_color
+        self.are_separators = separators
+        
+        
+
+        #create options variables
+        self.option_dict = {i: option for i, option in enumerate(self.selected_options)}
+        self.option_window = None  #Option Window
+        self.buttons = []  # Buttons list
+        self.current_option = None
+
+        self.selections_dict = {}
+
+        #print(self.selected_options)
+        self.create_widgets()
+
+    def create_widgets(self):
+        self.menu_bar = tk.Frame(self, bg=self.backg_color)
+        self.menu_bar.pack(fill=tk.X)
+
+        #Add options to menu
+        self.options = self.selected_options #["Options", "Files", "Edit", "User", "Apps"]
+        for i, option in enumerate(self.options):
+            button = ctk.CTkButton(self.menu_bar, text=option, font=self.font_ty, corner_radius= 0,
+                                   fg_color=self.backg_color, hover_color=self.hov_color,hover= self.is_hover, text_color=self.text_color, 
+                                   command=lambda opt=i: self.handle_click(opt))
+            button.pack(side=tk.LEFT, fill=tk.BOTH, expand=True)
+            self.buttons.append(button)
+
+            if( option != self.options[len(self.options)-1] and self.are_separators == True):
+                line = tk.Frame(self.menu_bar, bg=self.sep_color, width=2,height=30)
+                line.pack(side=tk.LEFT)
+
+    def add_selections(self, option: str, selections: tuple):
+        self.window_option = option
+        self.window_option_selections = selections
+        self.selections_dict[option] = selections
+        #print(self.selections_dict)
+
+    
+    def handle_click(self, option_number):       
+        #Conects each to fucntion
+        self.show_option_content(self.option_dict[option_number], self.buttons[option_number])
+
+
+
+    def show_option_content(self, option, button):
+        if self.option_window is not None and self.current_option == option:
+            self.option_window.destroy()
+            self.option_window = None
+            self.current_option = None
+        else:
+            # If window open but the button is not the same then it closes.
+            if self.option_window is not None:
+                self.option_window.destroy()
+
+            # New Option Window
+            self.option_window = tk.Toplevel(self)
+            self.option_window.title(option)
+            self.option_window.attributes('-toolwindow', True)
+            self.option_window.resizable(False, False)
+
+            # Place the window below each one
+            x = button.winfo_rootx()
+            y = button.winfo_rooty() + button.winfo_height()
+            self.option_window.geometry(f"+{x}+{y}")
+
+            #Add content to window
+            
+            if option in self.selections_dict:
+                self.selections_values = self.selections_dict[option]
+                selections = OptionSelections(self.option_window, self.selections_values, 
+                                  text_color=self.text_color, hover_color=self.hov_color ,back_color= self.backg_color,
+                                  separator_color= self.sep_color, font_type = self.options_font_ty)
+                selections.pack()
+            else:
+                label = tk.Label(self.option_window, text=f"You are in {option}", bg=self.backg_color, fg=self.text_color)
+                label.pack()
+        
+            self.current_option = option
+
+class OptionSelections(ctk.CTkFrame):
+    def __init__(self, parent, selections, 
+                 back_color = '#1F1F1F', text_color = '#8C8C8C', font_type = ('Arial', 15), 
+                 hover_color= '#313232',hover_state = True, separator_color = '#8C8C8C', separators = True, 
+                 *args, **kwargs):
+        super().__init__( parent, *args, **kwargs)
+        self.selections = selections
+        self.backg_color = back_color
+        self.text_color = text_color
+        self.font_ty = font_type
+        self.hover_col = hover_color
+        self.hover_state = hover_state
+        self.sep_color = separator_color
+        self.are_separators = separators
+
+        self.spaced = ' '
+        self.buttons = []
+        self.selection_window = None
+        self.selections_dict = {i: option for i, option in enumerate(self.selections)}
+        self.current_sel = None
+
+        #print(self.selections)
+        self.create_buttons()
+
+    def create_buttons(self):
+        self.selections_frame = tk.Frame(self, bg=self.backg_color)
+        self.selections_frame.pack()
+
+        max_button_size = 20
+
+        for i, selection in enumerate(self.selections):
+            if isinstance(selection, tuple):
+                #If selection tuple
+                button_text, button_command = selection
+                if isinstance(button_command, tuple):
+                    button = ctk.CTkButton(self.selections_frame, text=button_text, anchor="w", 
+                                           fg_color=self.backg_color, text_color=self.text_color, font=self.font_ty, hover_color=self.hover_col, 
+                                           hover=self.hover_state, corner_radius=0, command=lambda sel=i: self.handle_click(sel))
+                    button_tex = button_text[:max_button_size]
+                    button.configure(text=f'{self.spaced}{button_tex}')
+                    button.grid(row=i, column=0, sticky='we')
+                    self.buttons.append(button)
+                else:
+                    button = ctk.CTkButton(self.selections_frame, text=button_text, anchor="w", 
+                                           fg_color=self.backg_color, text_color=self.text_color, font=self.font_ty, hover_color=self.hover_col, 
+                                           hover=self.hover_state, corner_radius=0, command=button_command)
+                    button_tex = button_text[:max_button_size]
+                    button.configure(text=f'{self.spaced}{button_tex}')
+                    button.grid(row=i, column=0, sticky='we')
+                    self.buttons.append(button)
+            else:      
+                if(selection != '__separator' and selection != '__spacer' and selection != '__tab'):
+                    button = ctk.CTkButton(self.selections_frame, text= (selection), anchor="w", 
+                                         fg_color= self.backg_color, text_color= self.text_color, font= self.font_ty, hover_color= self.hover_col, 
+                                            hover= self.hover_state, corner_radius= 0, command=lambda sel=i: self.handle_click(sel))
+                    button_text = selection[:max_button_size]
+                    button.configure(text=f'{self.spaced}{button_text}')
+                    button.grid(row=i, column=0, sticky='we')
+                    self.buttons.append(button)
+                #Separators and more
+                elif(selection != self.selections[len(self.selections)-1] and self.are_separators == True):
+                    if(selection == '__separator'):
+                        line = tk.Frame(self.selections_frame, bg=self.sep_color, width=max_button_size,height=3)
+                        line.grid(row=i, column=0, sticky='we')
+                    elif(selection == '__spacer'):
+                        line = ctk.CTkFrame(self.selections_frame, fg_color="transparent", width=max_button_size,height=6)
+                        line.grid(row=i, column=0, sticky='we')
+                    elif(selection == '__tab'):
+                        self.spaced = f'{self.spaced} '
+
+    def handle_click(self, selection_number):       
+        self.show_option_content(self.selections_dict[selection_number], self.buttons[selection_number])
+
+    def show_option_content(self, selection, button):
+        if isinstance(selection, tuple):
+            selection_name, selection_values = selection
+            if self.selection_window is not None and self.current_sel == selection_name:
+                self.selection_window.destroy()
+                self.selection_window = None
+                self.current_sel = None
+            else:
+                if self.selection_window is not None:
+                    self.selection_window.destroy()
+
+                self.selection_window = tk.Toplevel(self)
+                self.selection_window.title(selection_name)
+                self.selection_window.attributes('-toolwindow', True)
+                self.selection_window.resizable(False, False)
+
+                x = button.winfo_rootx() + button.winfo_width()
+                y = button.winfo_rooty() 
+                self.selection_window.geometry(f"+{x}+{y}")
+            
+            
+                layout = OptionSelections(self.selection_window, selection_values, 
+                                              text_color=self.text_color, hover_color=self.hover_col,
+                                              back_color= self.backg_color,separator_color= self.sep_color, font_type = self.font_ty)
+                layout.pack()
+
+                self.current_sel = selection_name
+        else:    
+            if self.selection_window is not None and self.current_sel == selection:
+                self.selection_window.destroy()
+                self.selection_window = None
+                self.current_sel = None
+            else:
+                if self.selection_window is not None:
+                    self.selection_window.destroy()
+
+                self.selection_window = tk.Toplevel(self)
+                self.selection_window.title(selection)
+                self.selection_window.attributes('-toolwindow', True)
+                self.selection_window.resizable(False, False)
+
+                x = button.winfo_rootx() + button.winfo_width()
+                y = button.winfo_rooty() 
+                self.selection_window.geometry(f"+{x}+{y}")
+            
+                label = tk.Label(self.selection_window, text=f"You are in {selection}", bg=self.backg_color, fg=self.text_color)
+                label.pack()
+
+                self.current_sel = selection
+
+
+#----------------<< Demo >>-----------------
+                
+#Window root
+root = tk.Tk()
+
+#For use create a new element:
+my_menu = MenuCreator(root, ("Options", "Files", "Edit", "User", "Apps")) #Creates new blank menu 
+
+#More options can be customized:
+    #Example: (text_color='#cccccc', hover_color="#808080",back_color= '#4c4c4c',separator_color= "#3d3d3d", font_type = ('Cascadia Code', 18), options_font_type = ('Arial', 15))
+
+#To add options: 
+    #Example: (Option from my_menu, (selections desired to add) )
+
+my_menu.add_selections("Options", ("Settings", "Topics", "Themes", "Fonts", "More")) #Basic options to add
+
+def my_function():
+    print("MyFunction")
+    #Your function
+
+#More Complex functions/options:
+my_menu.add_selections("Files", (("Open",("Explorer", "Documents", "Texts")), #To add selections in options (option,(selections))                                                                              
+                                 ("Find",("Keys",)), #!!!!Important!!!!!!!!!, if selections=1 then syntax = (option,(selection,))
+                                 ("Close", exit), #To link with commands: (option, command)
+                                 ("Function", my_function), #To link with function: (option, function)
+                                 ("Folder",(("Explorer", ("Explore1", "Explore2", "Explore3", ("More In Explore",("More",)))), "Documents", "Texts")), #Options in options in options...
+                                 "More") #Plain selection in menu option
+                                 )
+
+
+my_menu.pack(fill=tk.X)  #Attach to top of frame/window, resizeble, equaly extended
+
+root.mainloop()
+
+
+
