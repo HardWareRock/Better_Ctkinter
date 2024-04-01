@@ -246,6 +246,7 @@ my_menu.add_selections("Files", (("Open",("Explorer", "Documents", "Texts")), #T
                                  ("Close", exit), #To link with commands: (option, command)
                                  ("Function", my_function), #To link with function: (option, function)
                                  ("Folder",(("Explorer", ("Explore1", "Explore2", "Explore3", ("More In Explore",("More",)))), "Documents", "Texts")), #Options in options in options...
+                                 "__separator", "__spacer", "__tab", #Options withing every possible selection
                                  "More") #Plain selection in menu option
                                  )
 
